@@ -5,24 +5,27 @@
     android:id="@+id/layout_photo_viewer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_horizontal"
     android:background="@android:color/black"
-    tools:context=".utils.PhotoViewerActivity">
+    android:gravity="center_horizontal"
+    tools:context=".utils.PhotoViewerActivity"
+    >
 
 
-    <ImageView
-        android:id="@+id/main_image_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_horizontal" />
+  <ImageView
+      android:id="@+id/main_image_view"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_gravity="center_horizontal"
+      />
 
-    <android.support.v4.widget.ContentLoadingProgressBar
-        android:id="@+id/progress_bar"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="invisible" />
+  <android.support.v4.widget.ContentLoadingProgressBar
+      android:id="@+id/progress_bar"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:visibility="invisible"
+      style="?android:attr/progressBarStyleLarge"
+      />
 
 
 </android.support.design.widget.CoordinatorLayout>
