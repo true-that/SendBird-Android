@@ -1,8 +1,8 @@
 <resources>
-  <string name="app_name">SendBird Sample</string>
+  <string name="app_name">Truedat</string>
 
   <!-- all -->
-  <string name="all_app_version">Sample UI v%1$s / SDK v%2$s</string>
+  <string name="all_app_version">v%1$s / SDK v%2$s</string>
 
   <string name="all_create">Create</string>
   <string name="all_invite">Invite</string>

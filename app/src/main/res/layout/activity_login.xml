@@ -8,7 +8,7 @@
     android:layout_height="match_parent"
     android:background="#ffffff"
     android:gravity="center_horizontal"
-    tools:context=".main.LoginActivity"
+    tools:context="com.truethat.android.main.LoginActivity"
     >
 
   <TextView

@@ -22,10 +22,21 @@
         android:id="@+id/button_group_chat_upload"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_gravity="bottom"
+        android:layout_gravity="center"
         android:background="?attr/selectableItemBackground"
         android:contentDescription="Upload file"
         app:srcCompat="@drawable/ic_add_black_24dp"
+        />
+
+    <ImageButton
+        android:id="@+id/button_group_chat_camera"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:contentDescription="Take photo"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/take_photo"
         />
 
     <EditText

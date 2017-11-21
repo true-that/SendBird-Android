@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/black"
     android:gravity="center_horizontal"
-    tools:context=".utils.PhotoViewerActivity"
+    tools:context="com.truethat.android.utils.PhotoViewerActivity"
     >
 
 

@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/black"
     android:gravity="center_horizontal"
-    tools:context=".utils.MediaPlayerActivity"
+    tools:context="com.truethat.android.utils.MediaPlayerActivity"
     >
 
   <RelativeLayout
