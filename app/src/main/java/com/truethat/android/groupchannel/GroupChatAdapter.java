@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.dinuscxj.progressbar.CircleProgressBar;
 import com.sendbird.android.AdminMessage;
@@ -31,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 import org.json.JSONException;
 
 class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -38,6 +40,8 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
   private static final int VIEW_TYPE_USER_MESSAGE_ME = 10;
   private static final int VIEW_TYPE_USER_MESSAGE_OTHER = 11;
+  private static final int VIEW_TYPE_REACT_MESSAGE_ME = 12;
+  private static final int VIEW_TYPE_REACT_MESSAGE_OTHER = 13;
   private static final int VIEW_TYPE_FILE_MESSAGE_ME = 20;
   private static final int VIEW_TYPE_FILE_MESSAGE_OTHER = 21;
   private static final int VIEW_TYPE_FILE_MESSAGE_IMAGE_ME = 22;
@@ -57,11 +61,13 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
   private ArrayList<String> mFailedMessageIdList = new ArrayList<>();
   private Hashtable<String, Uri> mTempFileMessageUriTable = new Hashtable<>();
   private boolean mIsMessageListLoading;
+  private GroupChatFragment mGroupChatFragment;
 
-  GroupChatAdapter(Context context) {
+  GroupChatAdapter(Context context, GroupChatFragment groupChatFragment) {
     mContext = context;
     mFileMessageMap = new HashMap<>();
     mMessageList = new ArrayList<>();
+    mGroupChatFragment = groupChatFragment;
   }
 
   public void load(String channelUrl) {
@@ -84,6 +90,7 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         mMessageList.add(BaseMessage.buildFromSerializedData(
             Base64.decode(dataArray[i], Base64.DEFAULT | Base64.NO_WRAP)));
       }
+      setDetectionListenerIfNeeded();
 
       notifyDataSetChanged();
     } catch (Exception e) {
@@ -152,6 +159,14 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         View otherUserMsgView = LayoutInflater.from(parent.getContext())
             .inflate(R.layout.list_item_group_chat_user_other, parent, false);
         return new OtherUserMessageHolder(otherUserMsgView);
+      case VIEW_TYPE_REACT_MESSAGE_ME:
+        View myReactMsgView = LayoutInflater.from(parent.getContext())
+            .inflate(R.layout.list_item_group_chat_user_me, parent, false);
+        return new MyReactMessageHolder(myReactMsgView);
+      case VIEW_TYPE_REACT_MESSAGE_OTHER:
+        View otherReactMsgView = LayoutInflater.from(parent.getContext())
+            .inflate(R.layout.list_item_group_chat_user_other, parent, false);
+        return new OtherReactMessageHolder(otherReactMsgView);
       case VIEW_TYPE_ADMIN_MESSAGE:
         View adminMsgView = LayoutInflater.from(parent.getContext())
             .inflate(R.layout.list_item_group_chat_admin, parent, false);
@@ -231,6 +246,16 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
       case VIEW_TYPE_ADMIN_MESSAGE:
         ((AdminMessageHolder) holder).bind(mContext, (AdminMessage) message, mChannel, isNewDay);
         break;
+      case VIEW_TYPE_REACT_MESSAGE_ME:
+        ((MyUserMessageHolder) holder).bind(mContext, (UserMessage) message, mChannel, isContinuous,
+            isNewDay, isTempMessage, isFailedMessage, mItemClickListener, mItemLongClickListener,
+            position);
+        break;
+      case VIEW_TYPE_REACT_MESSAGE_OTHER:
+        ((OtherUserMessageHolder) holder).bind(mContext, (UserMessage) message, mChannel, isNewDay,
+            isContinuous, mItemClickListener, mItemLongClickListener, position);
+
+        break;
       case VIEW_TYPE_FILE_MESSAGE_ME:
         ((MyFileMessageHolder) holder).bind(mContext, (FileMessage) message, mChannel, isNewDay,
             isTempMessage, isFailedMessage, tempFileMessageUri, mItemClickListener);
@@ -269,11 +294,20 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     if (message instanceof UserMessage) {
       UserMessage userMessage = (UserMessage) message;
-      // If the sender is current user
-      if (userMessage.getSender().getUserId().equals(SendBird.getCurrentUser().getUserId())) {
-        return VIEW_TYPE_USER_MESSAGE_ME;
+      boolean isCurrentSender =
+          userMessage.getSender().getUserId().equals(SendBird.getCurrentUser().getUserId());
+      if (Objects.equals(userMessage.getCustomType(), GroupChatFragment.REACTION_MESSAGE_TYPE)) {
+        if (isCurrentSender) {
+          return VIEW_TYPE_REACT_MESSAGE_ME;
+        } else {
+          return VIEW_TYPE_REACT_MESSAGE_OTHER;
+        }
       } else {
-        return VIEW_TYPE_USER_MESSAGE_OTHER;
+        if (isCurrentSender) {
+          return VIEW_TYPE_USER_MESSAGE_ME;
+        } else {
+          return VIEW_TYPE_USER_MESSAGE_OTHER;
+        }
       }
     } else if (message instanceof FileMessage) {
       FileMessage fileMessage = (FileMessage) message;
@@ -466,9 +500,11 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
             mMessageList.clear();
 
+
             for (BaseMessage message : list) {
               mMessageList.add(message);
             }
+            setDetectionListenerIfNeeded();
 
             notifyDataSetChanged();
           }
@@ -481,6 +517,33 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
   public void setItemClickListener(OnItemClickListener listener) {
     mItemClickListener = listener;
+  }
+
+  void setDetectionListenerIfNeeded() {
+    boolean shouldSet = false;
+    for (BaseMessage message : mMessageList) {
+      if (message instanceof FileMessage && !Objects.equals(
+          ((FileMessage) message).getSender().getUserId(), SendBird.getCurrentUser().getUserId())) {
+        shouldSet = true;
+      }
+      if (message instanceof UserMessage) {
+        UserMessage userMessage = (UserMessage) message;
+        boolean isCurrentSender = Objects.equals(userMessage.getSender().getUserId(),
+            SendBird.getCurrentUser().getUserId());
+        boolean isReaction =
+            Objects.equals(userMessage.getCustomType(), GroupChatFragment.REACTION_MESSAGE_TYPE);
+        if (isCurrentSender && isReaction) {
+          shouldSet = false;
+        } else if (!isCurrentSender && !isReaction) {
+          shouldSet = true;
+        }
+      }
+    }
+    if (shouldSet) {
+      ((GroupChannelActivity) mContext).getDetectionManager()
+          .getDetectionHandler()
+          .setDetectionListener(mGroupChatFragment);
+    }
   }
 
   void setContext(Context context) {
@@ -829,6 +892,26 @@ class GroupChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
           }
         });
       }
+    }
+  }
+
+  private class MyReactMessageHolder extends MyUserMessageHolder {
+    LinearLayout mMessageContainer;
+
+    MyReactMessageHolder(View itemView) {
+      super(itemView);
+      mMessageContainer = itemView.findViewById(R.id.group_chat_message_container);
+      mMessageContainer.setBackgroundResource(R.drawable.gradient_bg);
+    }
+  }
+
+  private class OtherReactMessageHolder extends OtherUserMessageHolder {
+    LinearLayout mMessageContainer;
+
+    OtherReactMessageHolder(View itemView) {
+      super(itemView);
+      mMessageContainer = itemView.findViewById(R.id.group_chat_message_container);
+      mMessageContainer.setBackgroundResource(R.drawable.gradient_bg);
     }
   }
 

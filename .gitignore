@@ -17,3 +17,19 @@ tmp/
 .settings/
 .loadpath
 *.userprefs
+
+# IntelliJ files
+/.idea/workspace.xml
+/app/.idea/workspace.xml
+**/.idea/misc.xml
+
+/app/.idea/libraries/
+
+# Generated build files
+/app/build/
+
+# generated APKs for PlayStore
+/signed-apk/
+
+# Fabric
+/app/fabric.properties

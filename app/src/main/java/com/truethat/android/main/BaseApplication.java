@@ -1,7 +1,10 @@
 package com.truethat.android.main;
 
 import android.app.Application;
+import android.util.Log;
+import com.crashlytics.android.Crashlytics;
 import com.sendbird.android.SendBird;
+import io.fabric.sdk.android.Fabric;
 
 public class BaseApplication extends Application {
 
@@ -10,6 +13,11 @@ public class BaseApplication extends Application {
 
   @Override public void onCreate() {
     super.onCreate();
+    for (int i = 0; i < 10; i++) {
+      Log.e("Truedat",
+          "************************ !!!!! LAUNCHED !!!!! ************************************************ !!!!! LAUNCHED !!!!! ************************");
+    }
     SendBird.init(APP_ID, getApplicationContext());
+    Fabric.with(this, new Crashlytics());
   }
 }

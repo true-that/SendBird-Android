@@ -11,9 +11,11 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.appsee.Appsee;
 import com.sendbird.android.SendBird;
 import com.sendbird.android.SendBirdException;
 import com.sendbird.android.User;
+import com.truethat.android.BuildConfig;
 import com.truethat.android.R;
 import com.truethat.android.utils.PreferenceUtils;
 import com.truethat.android.utils.PushUtils;
@@ -62,6 +64,9 @@ public class LoginActivity extends AppCompatActivity {
         String.format(getResources().getString(R.string.all_app_version), BaseApplication.VERSION,
             SendBird.getSDKVersion());
     ((TextView) findViewById(R.id.text_login_versions)).setText(sdkVersion);
+
+    // Appsee
+    Appsee.start(BuildConfig.APPSEE_API_KEY);
   }
 
   @Override protected void onStart() {

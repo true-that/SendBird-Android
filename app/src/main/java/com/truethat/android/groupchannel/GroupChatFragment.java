@@ -7,10 +7,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Vibrator;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -50,6 +52,8 @@ import com.sendbird.android.SendBirdException;
 import com.sendbird.android.User;
 import com.sendbird.android.UserMessage;
 import com.truethat.android.R;
+import com.truethat.android.affectiva.ReactionDetectionListener;
+import com.truethat.android.common.Emotion;
 import com.truethat.android.utils.FileUtils;
 import com.truethat.android.utils.MediaPlayerActivity;
 import com.truethat.android.utils.PhotoViewerActivity;
@@ -65,10 +69,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 import org.json.JSONException;
 
-public class GroupChatFragment extends Fragment {
+public class GroupChatFragment extends Fragment implements ReactionDetectionListener {
 
+  public static final String REACTION_MESSAGE_TYPE = "truedat_reaction";
   static final String EXTRA_CHANNEL_URL = "EXTRA_CHANNEL_URL";
   private static final String CONNECTION_HANDLER_ID = "CONNECTION_HANDLER_GROUP_CHAT";
   private static final String LOG_TAG = GroupChatFragment.class.getSimpleName();
@@ -79,11 +85,9 @@ public class GroupChatFragment extends Fragment {
   private static final int INTENT_REQUEST_CHOOSE_MEDIA = 301;
   private static final int INTENT_TAKE_PHOTO = 100;
   private static final int PERMISSION_WRITE_EXTERNAL_STORAGE = 13;
-  private static final int PERMISSION_CAMERA = 255;
   private InputMethodManager mIMM;
   private HashMap<BaseChannel.SendFileMessageWithProgressHandler, FileMessage>
       mFileProgressHandlerMap;
-
   private RelativeLayout mRootLayout;
   private RecyclerView mRecyclerView;
   private GroupChatAdapter mChatAdapter;
@@ -95,13 +99,11 @@ public class GroupChatFragment extends Fragment {
   private View mCurrentEventLayout;
   private TextView mCurrentEventText;
   private String mCurrentPhotoPath;
-
+  private MediaPlayer mPlayer;
   private GroupChannel mChannel;
   private String mChannelUrl;
   private PreviousMessageListQuery mPrevMessageListQuery;
-
   private boolean mIsTyping;
-
   private int mCurrentState = STATE_NORMAL;
   private BaseMessage mEditingMessage = null;
 
@@ -172,7 +174,7 @@ public class GroupChatFragment extends Fragment {
 
     Log.d(LOG_TAG, mChannelUrl);
 
-    mChatAdapter = new GroupChatAdapter(getActivity());
+    mChatAdapter = new GroupChatAdapter(getActivity(), this);
     setUpChatListAdapter();
 
     // Load messages from cache.
@@ -227,7 +229,7 @@ public class GroupChatFragment extends Fragment {
         } else {
           String userInput = mMessageEditText.getText().toString();
           if (userInput.length() > 0) {
-            sendUserMessage(userInput);
+            sendUserMessage(userInput, null);
             mMessageEditText.setText("");
           }
         }
@@ -289,6 +291,13 @@ public class GroupChatFragment extends Fragment {
           mChatAdapter.markAllMessagesAsRead();
           // Add new message to view
           mChatAdapter.addFirst(baseMessage);
+          if (!(baseMessage instanceof UserMessage) || !Objects.equals(
+              ((UserMessage) baseMessage).getCustomType(),
+              GroupChatFragment.REACTION_MESSAGE_TYPE)) {
+            ((GroupChannelActivity) getActivity()).getDetectionManager()
+                .getDetectionHandler()
+                .setDetectionListener(GroupChatFragment.this);
+          }
         }
       }
 
@@ -371,6 +380,8 @@ public class GroupChatFragment extends Fragment {
     SendBird.removeChannelHandler(CHANNEL_HANDLER_ID);
     SendBird.removeConnectionHandler(CONNECTION_HANDLER_ID);
     super.onPause();
+
+    killReactSoundPlayer();
   }
 
   @Override public void onDestroy() {
@@ -401,6 +412,31 @@ public class GroupChatFragment extends Fragment {
     }
 
     return super.onOptionsItemSelected(item);
+  }
+
+  @Override public void onReactionDetected(final Emotion reaction, boolean mostLikely) {
+    if (!mostLikely) return;
+    ((GroupChannelActivity) getActivity()).getDetectionManager()
+        .getDetectionHandler()
+        .setDetectionListener(null);
+    getActivity().runOnUiThread(new Runnable() {
+      @Override public void run() {
+        sendUserMessage(reaction.getEmoji(), REACTION_MESSAGE_TYPE);
+        Vibrator vb = (Vibrator) getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+        vb.vibrate(10);
+        killReactSoundPlayer();
+        mPlayer = MediaPlayer.create(getContext(), R.raw.react);
+        mPlayer.start();
+      }
+    });
+  }
+
+  private void killReactSoundPlayer() {
+    if (mPlayer != null) {
+      mPlayer.stop();
+      mPlayer.release();
+      mPlayer = null;
+    }
   }
 
   private File createImageFile() throws IOException {
@@ -591,7 +627,7 @@ public class GroupChatFragment extends Fragment {
             if (which == DialogInterface.BUTTON_POSITIVE) {
               if (message instanceof UserMessage) {
                 String userInput = ((UserMessage) message).getMessage();
-                sendUserMessage(userInput);
+                sendUserMessage(userInput, null);
               } else if (message instanceof FileMessage) {
                 Uri uri = mChatAdapter.getTempFileMessageUri(message);
                 sendFileWithThumbnail(uri);
@@ -716,28 +752,6 @@ public class GroupChatFragment extends Fragment {
     }
   }
 
-  private void requestCameraPermissions() {
-    Log.d(LOG_TAG, "requestCameraPermissions");
-    if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-        Manifest.permission.CAMERA)) {
-      // Provide an additional rationale to the user if the permission was not granted
-      // and the user would benefit from additional context for the use of the permission.
-      // For example if the user has previously denied the permission.
-      Snackbar.make(mRootLayout, "Camera access required to send photos.", Snackbar.LENGTH_LONG)
-          .setAction("Okay", new View.OnClickListener() {
-            @Override public void onClick(View view) {
-              requestPermissions(new String[] { Manifest.permission.CAMERA }, PERMISSION_CAMERA);
-            }
-          })
-          .show();
-    } else {
-      Log.d(LOG_TAG, "requesting...");
-      // Permission has not been granted yet. Request it directly.
-      ActivityCompat.requestPermissions(getActivity(), new String[] { Manifest.permission.CAMERA },
-          PERMISSION_CAMERA);
-    }
-  }
-
   private void onFileMessageClicked(FileMessage message) {
     String type = message.getType().toLowerCase();
     if (type.startsWith("image")) {
@@ -824,15 +838,16 @@ public class GroupChatFragment extends Fragment {
     }.execute(url);
   }
 
-  private void sendUserMessage(String text) {
+  private void sendUserMessage(String text, @Nullable String customType) {
+    Log.d(LOG_TAG, "sendUserMessage(" + text + ", " + customType + ")");
     List<String> urls = WebUtils.extractUrls(text);
     if (urls.size() > 0) {
       sendUserMessageWithUrl(text, urls.get(0));
       return;
     }
 
-    UserMessage tempUserMessage =
-        mChannel.sendUserMessage(text, new BaseChannel.SendUserMessageHandler() {
+    UserMessage tempUserMessage = mChannel.sendUserMessage(text, null, customType, null,
+        new BaseChannel.SendUserMessageHandler() {
           @Override public void onSent(UserMessage userMessage, SendBirdException e) {
             if (e != null) {
               // Error!

@@ -1,4 +1,20 @@
+buildscript {
+  repositories {
+    maven { url 'https://maven.fabric.io/public' }
+  }
+
+  dependencies {
+    //noinspection GradleDynamicVersion
+    classpath 'io.fabric.tools:gradle:1.+'
+  }
+}
+
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+
+repositories {
+  maven { url 'https://maven.fabric.io/public' }
+}
 
 android {
   compileSdkVersion 26
@@ -7,16 +23,34 @@ android {
     applicationId "com.truethat.android"
     minSdkVersion 23
     targetSdkVersion 26
-    versionCode getVersionCode()
-    versionName getVersionName()
+    versionCode buildVersionCode()
+    versionName version
     testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     vectorDrawables.useSupportLibrary = true
+    multiDexEnabled true
   }
   buildTypes {
-    release {
-      minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+    debug {
+      buildConfigField "String", "APPSEE_API_KEY", '"8f3b34050a22433ab923fced71a10e50"'
     }
+    release {
+      minifyEnabled true
+      zipAlignEnabled true
+      proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+      buildConfigField "String", "APPSEE_API_KEY", '"89c90b70e4d842d888795abf01e181b5"'
+    }
+    // For beta testing in the PlayStore.
+    beta {
+      initWith release
+      buildConfigField "String", "APPSEE_API_KEY", '"8f3b34050a22433ab923fced71a10e50"'
+      versionNameSuffix "-beta"
+    }
+  }
+  testOptions {
+    unitTests.returnDefaultValues = true
+  }
+  dataBinding {
+    enabled = true
   }
   productFlavors {}
 }
@@ -53,5 +87,12 @@ dependencies {
   compile 'org.jsoup:jsoup:1.10.2'
   compile 'com.dinuscxj:circleprogressbar:1.1.1'
   compile 'com.github.stfalcon:multiimageview:0.1'
+
+  // Fabric
+  compile("com.crashlytics.sdk.android:crashlytics:2.+@aar") {
+    transitive = true
+  }
+  compile 'com.appsee:appsee-android:+'
+  compile "com.affectiva.android:affdexsdk:3.+"
 }
 apply plugin: 'com.google.gms.google-services'
