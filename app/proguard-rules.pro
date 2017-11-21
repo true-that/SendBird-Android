@@ -87,3 +87,6 @@
 # Appsee
 -keep class com.appsee.** { *; }
 -dontwarn com.appsee.**
+
+# SendBird
+-dontwarn com.sendbird.android.shadow.**
