@@ -371,14 +371,14 @@
               android:textSize="15sp"
               />
 
-          <android.support.v7.widget.AppCompatCheckBox
-              android:id="@+id/checkbox_make_group_channel_distinct"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:layout_gravity="center_vertical"
-              android:layout_weight="0"
-              android:gravity="center_vertical"
-              />
+          <!--<android.support.v7.widget.AppCompatCheckBox-->
+          <!--android:id="@+id/checkbox_make_group_channel_distinct"-->
+          <!--android:layout_width="wrap_content"-->
+          <!--android:layout_height="wrap_content"-->
+          <!--android:layout_gravity="center_vertical"-->
+          <!--android:layout_weight="0"-->
+          <!--android:gravity="center_vertical"-->
+          <!--/>-->
 
         </LinearLayout>
 

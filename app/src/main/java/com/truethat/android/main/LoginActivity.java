@@ -1,12 +1,15 @@
 package com.truethat.android.main;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputEditText;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AppCompatActivity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -17,13 +20,16 @@ import com.sendbird.android.SendBirdException;
 import com.sendbird.android.User;
 import com.truethat.android.BuildConfig;
 import com.truethat.android.R;
+import com.truethat.android.groupchannel.GroupChannelActivity;
 import com.truethat.android.utils.PreferenceUtils;
 import com.truethat.android.utils.PushUtils;
 
 public class LoginActivity extends AppCompatActivity {
 
+  private static final int NICKNAME_MIN_LENGTH = 3;
   private CoordinatorLayout mLoginLayout;
-  private TextInputEditText mUserIdConnectEditText, mUserNicknameEditText;
+  //private TextInputEditText mUserIdConnectEditText;
+  private TextInputEditText mUserNicknameEditText;
   private Button mConnectButton;
   private ContentLoadingProgressBar mProgressBar;
 
@@ -34,16 +40,26 @@ public class LoginActivity extends AppCompatActivity {
 
     mLoginLayout = (CoordinatorLayout) findViewById(R.id.layout_login);
 
-    mUserIdConnectEditText = (TextInputEditText) findViewById(R.id.edittext_login_user_id);
+    //mUserIdConnectEditText = (TextInputEditText) findViewById(R.id.edittext_login_user_id);
     mUserNicknameEditText = (TextInputEditText) findViewById(R.id.edittext_login_user_nickname);
 
-    mUserIdConnectEditText.setText(PreferenceUtils.getUserId(this));
+    //mUserIdConnectEditText.setText(PreferenceUtils.getUserId(this));
     mUserNicknameEditText.setText(PreferenceUtils.getNickname(this));
-
+    mUserNicknameEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+      @Override public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+        if (v.getText().length() >= NICKNAME_MIN_LENGTH) {
+          mConnectButton.performClick();
+          return true;
+        }
+        return false;
+      }
+    });
     mConnectButton = (Button) findViewById(R.id.button_login_connect);
     mConnectButton.setOnClickListener(new View.OnClickListener() {
       @Override public void onClick(View v) {
-        String userId = mUserIdConnectEditText.getText().toString();
+        @SuppressLint("HardwareIds") String userId =
+            Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        //mUserIdConnectEditText.getText().toString();
         // Remove all spaces from userID
         userId = userId.replaceAll("\\s", "");
 
@@ -52,7 +68,9 @@ public class LoginActivity extends AppCompatActivity {
         PreferenceUtils.setUserId(LoginActivity.this, userId);
         PreferenceUtils.setNickname(LoginActivity.this, userNickname);
 
-        connectToSendBird(userId, userNickname);
+        if (userNickname.length() >= NICKNAME_MIN_LENGTH) {
+          connectToSendBird(userId, userNickname);
+        }
       }
     });
 
@@ -113,7 +131,7 @@ public class LoginActivity extends AppCompatActivity {
         updateCurrentUserPushToken();
 
         // Proceed to MainActivity
-        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        Intent intent = new Intent(LoginActivity.this, GroupChannelActivity.class);
         startActivity(intent);
         finish();
       }

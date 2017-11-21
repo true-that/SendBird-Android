@@ -13,7 +13,6 @@ import android.widget.Button;
 import com.sendbird.android.GroupChannel;
 import com.sendbird.android.SendBirdException;
 import com.truethat.android.R;
-import com.truethat.android.utils.PreferenceUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,7 +103,8 @@ public class CreateGroupChannelActivity extends AppCompatActivity
       @Override public void onClick(View v) {
         if (mCurrentState == STATE_SELECT_USERS) {
           //                if (mCurrentState == STATE_SELECT_DISTINCT) {
-          mIsDistinct = PreferenceUtils.getGroupChannelDistinct(CreateGroupChannelActivity.this);
+          //mIsDistinct = PreferenceUtils.getGroupChannelDistinct(CreateGroupChannelActivity.this);
+          mIsDistinct = true;
           createGroupChannel(mSelectedIds, mIsDistinct);
         }
       }

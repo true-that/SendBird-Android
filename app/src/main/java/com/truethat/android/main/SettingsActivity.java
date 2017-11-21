@@ -30,7 +30,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -85,7 +84,7 @@ public class SettingsActivity extends AppCompatActivity {
   private TextView mTextViewNotificationsDoNotDisturbFrom;
   private TextView mTextViewNotificationsDoNotDisturbTo;
 
-  private CheckBox mCheckBoxGroupChannelDistinct;
+  //private CheckBox mCheckBoxGroupChannelDistinct;
 
   private LinearLayout mLinearLayoutBlockedMembersList;
 
@@ -188,8 +187,8 @@ public class SettingsActivity extends AppCompatActivity {
     mTextViewNotificationsDoNotDisturbTo =
         (TextView) findViewById(R.id.text_view_notifications_do_not_disturb_to);
 
-    mCheckBoxGroupChannelDistinct =
-        (CheckBox) findViewById(R.id.checkbox_make_group_channel_distinct);
+    //mCheckBoxGroupChannelDistinct =
+    //    (CheckBox) findViewById(R.id.checkbox_make_group_channel_distinct);
 
     mLinearLayoutBlockedMembersList =
         (LinearLayout) findViewById(R.id.linear_layout_blocked_members_list);
@@ -362,17 +361,17 @@ public class SettingsActivity extends AppCompatActivity {
     });
     //- Notifications
 
-    //+ Group Channel Distinct
-    mCheckBoxGroupChannelDistinct.setChecked(
-        PreferenceUtils.getGroupChannelDistinct(SettingsActivity.this));
-
-    mCheckBoxGroupChannelDistinct.setOnCheckedChangeListener(
-        new CompoundButton.OnCheckedChangeListener() {
-          @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            PreferenceUtils.setGroupChannelDistinct(SettingsActivity.this, isChecked);
-          }
-        });
-    //- Group Channel Distinct
+    ////+ Group Channel Distinct
+    //mCheckBoxGroupChannelDistinct.setChecked(
+    //    PreferenceUtils.getGroupChannelDistinct(SettingsActivity.this));
+    //
+    //mCheckBoxGroupChannelDistinct.setOnCheckedChangeListener(
+    //    new CompoundButton.OnCheckedChangeListener() {
+    //      @Override public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+    //        PreferenceUtils.setGroupChannelDistinct(SettingsActivity.this, isChecked);
+    //      }
+    //    });
+    ////- Group Channel Distinct
   }
 
   private void saveDoNotDisturb(final boolean doNotDisturb) {
