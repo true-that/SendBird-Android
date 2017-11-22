@@ -14,19 +14,19 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import com.truethat.android.R;
-import com.truethat.android.affectiva.ReactionDetectionManager;
+import com.truethat.android.affectiva.AffectivaReactionDetectionManager;
 import com.truethat.android.main.SettingsActivity;
 import java.util.Objects;
 
-import static com.truethat.android.affectiva.ReactionDetectionManager.PERMISSION_CAMERA;
+import static com.truethat.android.affectiva.AffectivaReactionDetectionManager.PERMISSION_CAMERA;
 
 public class GroupChannelActivity extends AppCompatActivity {
   private static final String LOG_TAG = GroupChannelActivity.class.getSimpleName();
 
   private onBackPressedListener mOnBackPressedListener;
-  private ReactionDetectionManager mDetectionManager;
+  private AffectivaReactionDetectionManager mDetectionManager;
 
-  public ReactionDetectionManager getDetectionManager() {
+  public AffectivaReactionDetectionManager getDetectionManager() {
     return mDetectionManager;
   }
 
@@ -114,7 +114,7 @@ public class GroupChannelActivity extends AppCompatActivity {
 
   void startDetector() {
     if (mDetectionManager == null) {
-      mDetectionManager = new ReactionDetectionManager();
+      mDetectionManager = new AffectivaReactionDetectionManager();
     }
     mDetectionManager.start(this);
   }

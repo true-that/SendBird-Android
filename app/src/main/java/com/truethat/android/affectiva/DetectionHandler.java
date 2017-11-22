@@ -28,7 +28,8 @@ import java.util.Map;
  * A handler for the DetectionThread.
  */
 public class DetectionHandler extends Handler {
-  private static final double DETECTION_THRESHOLD = 200;
+  private static final double SUM_THRESHOLD = 200;
+  private static final double ITERATION_THRESHOLD = 50;
   //Incoming message codes
   private static final int START = 0;
   private static final int STOP = 1;
@@ -67,20 +68,22 @@ public class DetectionHandler extends Handler {
     mFrameDetector.setImageListener(new Detector.ImageListener() {
       @Override public void onImageResults(List<Face> faces, Frame frame, float v) {
         for (final Face face : faces) {
-          emotionToLikelihood.put(AffectivaEmotion.JOY,
-              emotionToLikelihood.get(AffectivaEmotion.JOY) + face.emotions.getJoy());
-          emotionToLikelihood.put(AffectivaEmotion.SURPRISE,
-              emotionToLikelihood.get(AffectivaEmotion.SURPRISE) + face.emotions.getSurprise());
-          emotionToLikelihood.put(AffectivaEmotion.ANGER,
-              emotionToLikelihood.get(AffectivaEmotion.ANGER) + face.emotions.getAnger());
+          Map<AffectivaEmotion, Float> currentLikelihood = new HashMap<>();
+          currentLikelihood = new HashMap<>();
+          currentLikelihood.put(AffectivaEmotion.JOY, face.emotions.getJoy());
+          currentLikelihood.put(AffectivaEmotion.SURPRISE, face.emotions.getSurprise());
+          currentLikelihood.put(AffectivaEmotion.ANGER, face.emotions.getAnger());
           // Fear is harder to detect, and so it is amplified
-          emotionToLikelihood.put(AffectivaEmotion.FEAR,
-              emotionToLikelihood.get(AffectivaEmotion.FEAR) + face.emotions.getFear() * 2);
+          currentLikelihood.put(AffectivaEmotion.FEAR, face.emotions.getFear() * 3);
           // Negative emotions are too easy to detect, and so they are decreased
-          emotionToLikelihood.put(AffectivaEmotion.SADNESS,
-              emotionToLikelihood.get(AffectivaEmotion.SADNESS) + face.emotions.getSadness() / 2);
-          emotionToLikelihood.put(AffectivaEmotion.DISGUST,
-              emotionToLikelihood.get(AffectivaEmotion.DISGUST) + face.emotions.getDisgust() / 2);
+          currentLikelihood.put(AffectivaEmotion.DISGUST, face.emotions.getDisgust() / 2);
+          currentLikelihood.put(AffectivaEmotion.SADNESS, face.emotions.getSadness() / 2);
+          for (Map.Entry<AffectivaEmotion, Float> likelihoodEntry : currentLikelihood.entrySet()) {
+            if (likelihoodEntry.getValue() > ITERATION_THRESHOLD) {
+              emotionToLikelihood.put(likelihoodEntry.getKey(),
+                  emotionToLikelihood.get(likelihoodEntry.getKey()) + likelihoodEntry.getValue());
+            }
+          }
           Map.Entry<AffectivaEmotion, Float> mostLikely =
               Collections.max(emotionToLikelihood.entrySet(),
                   new Comparator<Map.Entry<AffectivaEmotion, Float>>() {
@@ -93,16 +96,16 @@ public class DetectionHandler extends Handler {
           if (mDetectionListener != null) {
             for (Map.Entry<AffectivaEmotion, Float> emotionLikelihoodEntry : emotionToLikelihood.entrySet()) {
               if (emotionLikelihoodEntry.getKey() != mostLikely.getKey()
-                  && emotionLikelihoodEntry.getValue() > DETECTION_THRESHOLD) {
+                  && emotionLikelihoodEntry.getValue() > SUM_THRESHOLD) {
                 mDetectionListener.onReactionDetected(emotionLikelihoodEntry.getKey().getEmotion(),
                     false);
               }
             }
-            if (mostLikely.getValue() > DETECTION_THRESHOLD) {
+            if (mostLikely.getValue() > SUM_THRESHOLD) {
               mDetectionListener.onReactionDetected(mostLikely.getKey().getEmotion(), true);
             }
           }
-          if (mostLikely.getValue() > DETECTION_THRESHOLD) {
+          if (mostLikely.getValue() > SUM_THRESHOLD) {
             Log.d(LOG_TAG, "Detected " + mostLikely.getKey().getEmotion());
             resetLikelihoodMap();
           }

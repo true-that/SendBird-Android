@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -61,8 +63,11 @@ import com.truethat.android.utils.PreferenceUtils;
 import com.truethat.android.utils.TextUtils;
 import com.truethat.android.utils.UrlPreviewInfo;
 import com.truethat.android.utils.WebUtils;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -908,6 +913,19 @@ public class GroupChatFragment extends Fragment implements ReactionDetectionList
     }
 
     final String path = (String) info.get("path");
+
+    // Reducing image size
+    Bitmap bitmap = BitmapFactory.decodeFile(path);
+    bitmap =
+        Bitmap.createScaledBitmap(bitmap, bitmap.getWidth() / 2, bitmap.getHeight() / 2, false);
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 30, byteArrayOutputStream);
+    try (OutputStream outputStream = new FileOutputStream(path)) {
+      byteArrayOutputStream.writeTo(outputStream);
+    } catch (IOException e) {
+      Log.e(LOG_TAG, "Failed to write photo minified photo.");
+    }
+
     final File file = new File(path);
     final String name = file.getName();
     String mime = (String) info.get("mime");

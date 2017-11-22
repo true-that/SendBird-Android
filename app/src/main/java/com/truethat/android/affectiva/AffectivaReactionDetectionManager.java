@@ -14,9 +14,9 @@ import android.view.View;
  * <p>
  * A wrapper for Affectiva emotion detection engine.
  */
-public class ReactionDetectionManager {
+public class AffectivaReactionDetectionManager {
   public static final int PERMISSION_CAMERA = 255;
-  String LOG_TAG = ReactionDetectionManager.class.getSimpleName();
+  String LOG_TAG = AffectivaReactionDetectionManager.class.getSimpleName();
   private HandlerThread detectionThread;
   private DetectionHandler detectionHandler;
 
